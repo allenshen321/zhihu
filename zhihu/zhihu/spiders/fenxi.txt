@@ -1,0 +1,186 @@
+1、 需求
+爬取知乎用户的个人信息,轮子哥的个人详细信息网址
+https://www.zhihu.com/api/v4/members/excited-vczh?include=locations%2Cemployments%2Cgender%2Ceducations%2Cbusiness%2Cvoteup_count%2Cthanked_Count%2Cfollower_count%2Cfollowing_count%2Ccover_url%2Cfollowing_topic_count%2Cfollowing_question_count%2Cfollowing_favlists_count%2Cfollowing_columns_count%2Cavatar_hue%2Canswer_count%2Carticles_count%2Cpins_count%2Cquestion_count%2Ccolumns_count%2Ccommercial_question_count%2Cfavorite_count%2Cfavorited_count%2Clogs_count%2Cincluded_answers_count%2Cincluded_articles_count%2Cincluded_text%2Cmessage_thread_token%2Caccount_status%2Cis_active%2Cis_bind_phone%2Cis_force_renamed%2Cis_bind_sina%2Cis_privacy_protected%2Csina_weibo_url%2Csina_weibo_name%2Cshow_sina_weibo%2Cis_blocking%2Cis_blocked%2Cis_following%2Cis_followed%2Cis_org_createpin_white_user%2Cmutual_followees_count%2Cvote_to_count%2Cvote_from_count%2Cthank_to_count%2Cthank_from_count%2Cthanked_count%2Cdescription%2Chosted_live_count%2Cparticipated_live_count%2Callow_message%2Cindustry_category%2Corg_name%2Corg_homepage%2Cbadge%5B%3F(type%3Dbest_answerer)%5D.topics
+
+
+
+
+3、轮子哥的response：json形式
+name = scrapy.Field() # user_name
+educations = {'school': '华南理工大学'， ‘major': '软件学院'}
+following_count = scrapy.Field() # 2418 关注的人数
+headline = scrapy.Field() # 一句话简介
+url_token = scrapy.Field() # 用户唯一ID
+favorited_count = scrapy.Field() # 收藏量
+follower_count = scrapy.Field() # 被多少人关注
+employments = {'job':'Developer', 'company': 'Microsoft Office', 'introduction': 'Microsoft Office 是一套由微软开发的办公软件。'
+employments = scrapy.Field() # 职业
+following_topic_count = scrapy.Field() # 关注的话题数
+description = scrapy.Field() # 个人简介
+business = {'name': '计算机软件'}
+business = scrapy.Field() # 所在行业
+answer_count = scrapy.Field() #回答数量
+articles_count = scrapy.Field() # 文章数量
+question_count = scrapy.Field() # 提问数量
+locations = scrapy.Field() # 居住地
+included_answers_count = scrapy.Field() # 知乎收录回答数量
+logs_count = scrapy.Field() # 参与公共编辑数量
+thanked_count = scrapy.Field() # 被感觉次数
+gender = scrapy.Field() # 性别
+
+
+
+4、所需要构造的网页有3个
+1）用户信息网页：url_token = excited-vczh 此链接的唯一变量
+https://www.zhihu.com/api/v4/members/excited-vczh?include=locations%2Cemployments%2Cgender%2Ceducations%2Cbusiness%2Cvoteup_count%2Cthanked_Count%2Cfollower_count%2Cfollowing_count%2Ccover_url%2Cfollowing_topic_count%2Cfollowing_question_count%2Cfollowing_favlists_count%2Cfollowing_columns_count%2Cavatar_hue%2Canswer_count%2Carticles_count%2Cpins_count%2Cquestion_count%2Ccolumns_count%2Ccommercial_question_count%2Cfavorite_count%2Cfavorited_count%2Clogs_count%2Cincluded_answers_count%2Cincluded_articles_count%2Cincluded_text%2Cmessage_thread_token%2Caccount_status%2Cis_active%2Cis_bind_phone%2Cis_force_renamed%2Cis_bind_sina%2Cis_privacy_protected%2Csina_weibo_url%2Csina_weibo_name%2Cshow_sina_weibo%2Cis_blocking%2Cis_blocked%2Cis_following%2Cis_followed%2Cis_org_createpin_white_user%2Cmutual_followees_count%2Cvote_to_count%2Cvote_from_count%2Cthank_to_count%2Cthank_from_count%2Cthanked_count%2Cdescription%2Chosted_live_count%2Cparticipated_live_count%2Callow_message%2Cindustry_category%2Corg_name%2Corg_homepage%2Cbadge%5B%3F(type%3Dbest_answerer)%5D.topics
+
+2）关注人的信息页，主要提取关注人的url_tokon，以构建新的用户信息链接
+构建此链接的变量有 url_token = ’excited-vczh‘， offset = 0, limit = 20 , 下一页是链接offset+20
+判断是否读完可用：response.get('paging').get('total')/limit + 1
+https://www.zhihu.com/api/v4/members/excited-vczh/followees?include=data%5B*%5D.answer_count%2Carticles_count%2Cgender%2Cfollower_count%2Cis_followed%2Cis_following%2Cbadge%5B%3F(type%3Dbest_answerer)%5D.topics&offset=20&limit=20
+
+主要去该链接响应体的数据：
+取出改用户所关注人的 url_token，用来构建用户详细信息链接url
+
+
+5、关注的话题
+https://www.zhihu.com/api/v4/members/excited-vczh/following-topic-contributions?include=data%5B*%5D.topic.introduction&offset=0&limit=20
+url 中的相关变量有： url_token, offset（偏移量为20）
+
+所取信息：
+topic_name(话题名称）、 topic_introduction（话题介绍）、topic_contributions（话题回答数量）
+
+
+
+
+
+
+
+
+
+2、# response json格式 信息如下
+{
+    "is_followed":false,
+    "educations": {
+        {
+            "school":{
+                "introduction":"",
+                "avatar_url":"https://pic1.zhimg.com/e82bab09c_is.jpg",
+                "name":"华南理工大学",
+                "url":"http://www.zhihu.com/api/v4/topics/20075579",
+                "type":"topic",
+                "excerpt":"",
+                "id":"20075579"
+            },
+            "major":{
+                "introduction":"",
+                "avatar_url":"https://pic4.zhimg.com/v2-b9bfb60588338c348cc23576ad6243bb_is.png",
+                "name":"软件学院",
+                "url":"http://www.zhihu.com/api/v4/topics/19590324",
+                "type":"topic",
+                "excerpt":"",
+                "id":"19590324"
+            }
+        }
+    ],
+    "following_count":2418,
+    "vote_from_count":0,
+    "user_type":"people",
+    "included_text":"编辑推荐",
+    "pins_count":34,
+    "is_following":true,
+    "is_privacy_protected":false,
+    "account_status":[
+
+    ],
+    "included_articles_count":2,
+    "is_force_renamed":false,
+    "id":"0970f947b898ecc0ec035f9126dd4e08",
+    "favorite_count":1,
+    "voteup_count":1742770,
+    "commercial_question_count":0,
+    "is_blocking":false,
+    "following_columns_count":84,
+    "headline":"专业造轮子，拉黑抢前排。<a href="https://link.zhihu.com/?target=http%3A//gaclib.net" class=" external" target="_blank" rel="nofollow noreferrer"><span class="invisible">http://</span><span class="visible">gaclib.net</span><span class="invisible"></span><i class="icon-external"></i></a>",
+    "url_token":"excited-vczh",
+    "participated_live_count":7,
+    "following_favlists_count":25,
+    "is_advertiser":false,
+    "is_bind_sina":true,
+    "favorited_count":272985,
+    "is_org":false,
+    "follower_count":636927,
+    "employments":[
+        {
+            "job":{
+                "introduction":"",
+                "avatar_url":"https://pic1.zhimg.com/e82bab09c_is.jpg",
+                "name":"Developer",
+                "url":"http://www.zhihu.com/api/v4/topics/19578588",
+                "type":"topic",
+                "excerpt":"",
+                "id":"19578588"
+            },
+            "company":{
+                "introduction":"Microsoft Office 是一套由微软开发的办公软件。",
+                "avatar_url":"https://pic3.zhimg.com/v2-d3a9ee5ba3a2fe711087787c6169dcca_is.jpg",
+                "name":"Microsoft Office",
+                "url":"http://www.zhihu.com/api/v4/topics/19557307",
+                "type":"topic",
+                "excerpt":"Microsoft Office 是一套由微软开发的办公软件。",
+                "id":"19557307"
+            }
+        }
+    ],
+    "type":"people",
+    "avatar_hue":"",
+    "avatar_url_template":"https://pic1.zhimg.com/v2-1bea18837914ab5a40537d515ed3219c_{size}.jpg",
+    "following_topic_count":37,
+    "description":"微博也看图（逃：<a href="https://link.zhihu.com/?target=http%3A//weibo.com/vczh" class=" external" target="_blank" rel="nofollow noreferrer"><span class="invisible">http://</span><span class="visible">weibo.com/vczh</span><span class="invisible"></span><i class="icon-external"></i></a><br>长期开发跨三大PC平台的GUI库<a href="https://link.zhihu.com/?target=http%3A//www.gaclib.net" class=" external" target="_blank" rel="nofollow noreferrer"><span class="invisible">http://www.</span><span class="visible">gaclib.net</span><span class="invisible"></span><i class="icon-external"></i></a><br>讨论QQ群：231200072（不闲聊）<br>不再更新的技术博客：<a href="https://link.zhihu.com/?target=http%3A//www.cppblog.com/vczh" class=" external" target="_blank" rel="nofollow noreferrer"><span class="invisible">http://www.</span><span class="visible">cppblog.com/vczh</span><span class="invisible"></span><i class="icon-external"></i></a>",
+    "business":{
+        "introduction":"徼",
+        "avatar_url":"https://pic1.zhimg.com/e82bab09c_is.jpg",
+        "name":"计算机软件",
+        "url":"http://www.zhihu.com/api/v4/topics/19619368",
+        "type":"topic",
+        "excerpt":"徼",
+        "id":"19619368"
+    },
+    "avatar_url":"https://pic1.zhimg.com/v2-1bea18837914ab5a40537d515ed3219c_is.jpg",
+    "columns_count":5,
+    "hosted_live_count":0,
+    "is_active":1,
+    "thank_to_count":0,
+    "mutual_followees_count":1,
+    "cover_url":"https://pic1.zhimg.com/v2-67b965aa94a92ed49b1a4205145b5cf4_b.jpg",
+    "thank_from_count":0,
+    "vote_to_count":0,
+    "is_blocked":false,
+    "answer_count":17439,
+    "allow_message":true,
+    "articles_count":81,
+    "name":"vczh",
+    "question_count":514,
+    "locations":[
+        {
+            "introduction":"西雅图是美国西北部最大的城市。多家高科技公司的总部（Microsoft, Amazon，Boeing 等等）坐落于此。",
+            "avatar_url":"https://pic4.zhimg.com/161f6ece791a4950ded3278fb74a2f9b_is.jpg",
+            "name":"西雅图（Seattle）",
+            "url":"http://www.zhihu.com/api/v4/topics/19583552",
+            "type":"topic",
+            "excerpt":"西雅图是美国西北部最大的城市。多家高科技公司的总部（Microsoft, Amazon，Boeing 等等）坐落于此。",
+            "id":"19583552"
+        }
+    ],
+    "badge":[
+
+    ],
+    "included_answers_count":4,
+    "show_sina_weibo":false,
+    "url":"http://www.zhihu.com/api/v4/people/0970f947b898ecc0ec035f9126dd4e08",
+    "message_thread_token":"4874924000",
+    "logs_count":2539,
+    "following_question_count":29333,
+    "thanked_count":207643,
+    "gender":1
+}
